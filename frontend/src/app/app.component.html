@@ -1,0 +1,592 @@
+
+<div class="app-container">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-icon">S</div>
+        <div>
+          <h1>Salary Management System</h1>
+          <p>Employee directory and compensation overview</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="openAddModal()">
+        + Add Employee
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard -->
+  <main class="dashboard">
+
+    <!-- Alerts -->
+    <div
+      *ngIf="successMessage"
+      class="alert alert-success"
+      role="status">
+      {{ successMessage }}
+      <button
+        type="button"
+        class="alert-close"
+        aria-label="Dismiss success message"
+        (click)="successMessage = ''">
+        ×
+      </button>
+    </div>
+
+    <div
+      *ngIf="errorMessage && !showModal"
+      class="alert alert-error"
+      role="alert">
+      {{ errorMessage }}
+      <button
+        type="button"
+        class="alert-close"
+        aria-label="Dismiss error message"
+        (click)="errorMessage = ''">
+        ×
+      </button>
+    </div>
+
+    <!-- Page Heading -->
+    <section class="page-heading">
+      <div>
+        <h2>Dashboard Overview</h2>
+        <p>Manage employees and view company-wide statistics.</p>
+      </div>
+    </section>
+
+    <!-- Statistics Cards -->
+    <section class="stats-grid">
+
+      <article class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Total Employees</div>
+        <div class="stat-value">
+          {{ totalEmployees | number }}
+        </div>
+        <span>Employees in the database</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">🌍</div>
+        <div class="stat-label">Countries</div>
+        <div class="stat-value">
+          {{ getCountryCount() | number }}
+        </div>
+        <span>Across all employees</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">🏢</div>
+        <div class="stat-label">Departments</div>
+        <div class="stat-value">
+          {{ getDepartmentCount() | number }}
+        </div>
+        <span>Across all employees</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-label">Current Page</div>
+        <div class="stat-value">
+          {{ totalPages === 0 ? 0 : currentPage + 1 }}
+          <span class="stat-total">/ {{ totalPages }}</span>
+        </div>
+        <span>Paginated employee records</span>
+      </article>
+
+    </section>
+
+    <!-- Employee Directory -->
+    <section class="employee-section">
+
+      <div class="section-header">
+        <div>
+          <h2>Employee Directory</h2>
+          <p>Search, sort, create, update, and delete employee records.</p>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-box">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+
+        <input
+          type="search"
+          placeholder="Search by name, email, employee number, country..."
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()"
+          aria-label="Search all employees"
+        />
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="onSearch()"
+          [disabled]="loading">
+          Search
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="clearSearch()"
+          [disabled]="loading">
+          Clear
+        </button>
+      </div>
+
+      <!-- Table Information -->
+      <div class="table-toolbar">
+        <div class="table-summary">
+          Showing
+          <strong>{{ firstRecordNumber }}</strong>
+          to
+          <strong>{{ lastRecordNumber }}</strong>
+          of
+          <strong>{{ totalEmployees | number }}</strong>
+          employees
+        </div>
+
+        <label class="page-size-control">
+          <span>Rows per page</span>
+          <select
+            [ngModel]="pageSize"
+            (ngModelChange)="changePageSize($event)"
+            aria-label="Rows per page">
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="25">25</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Loading -->
+      <div
+        *ngIf="loading"
+        class="loading-state"
+        role="status">
+        <div class="loading-spinner"></div>
+        <p>Loading employee records...</p>
+      </div>
+
+      <!-- Employee Table -->
+      <div class="table-responsive" *ngIf="!loading">
+        <table class="employee-table">
+          <thead>
+            <tr>
+              <th>
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortEmployees('employeeNumber')">
+                  Employee ID
+                  <span *ngIf="sortBy === 'employeeNumber'">
+                    {{ sortDirection === 'ASC' ? '↑' : '↓' }}
+                  </span>
+                </button>
+              </th>
+
+              <th>
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortEmployees('firstName')">
+                  Employee Name
+                  <span *ngIf="sortBy === 'firstName'">
+                    {{ sortDirection === 'ASC' ? '↑' : '↓' }}
+                  </span>
+                </button>
+              </th>
+
+              <th>
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortEmployees('email')">
+                  Email
+                  <span *ngIf="sortBy === 'email'">
+                    {{ sortDirection === 'ASC' ? '↑' : '↓' }}
+                  </span>
+                </button>
+              </th>
+
+              <th>
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortEmployees('country')">
+                  Country
+                  <span *ngIf="sortBy === 'country'">
+                    {{ sortDirection === 'ASC' ? '↑' : '↓' }}
+                  </span>
+                </button>
+              </th>
+
+              <th>
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortEmployees('department')">
+                  Department
+                  <span *ngIf="sortBy === 'department'">
+                    {{ sortDirection === 'ASC' ? '↑' : '↓' }}
+                  </span>
+                </button>
+              </th>
+
+              <th>Job Title</th>
+
+              <th>
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortEmployees('salary')">
+                  Salary
+                  <span *ngIf="sortBy === 'salary'">
+                    {{ sortDirection === 'ASC' ? '↑' : '↓' }}
+                  </span>
+                </button>
+              </th>
+
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let employee of employees">
+              <td>
+                <span class="employee-number">
+                  {{ employee.employeeNumber }}
+                </span>
+              </td>
+
+              <td>
+                <div class="employee-name">
+                  <div class="avatar">
+                    {{ employee.firstName.charAt(0) }}{{ employee.lastName.charAt(0) }}
+                  </div>
+                  <span>{{ getEmployeeName(employee) }}</span>
+                </div>
+              </td>
+
+              <td>{{ employee.email }}</td>
+
+              <td>
+                <span class="country-label">
+                  {{ employee.country }}
+                </span>
+              </td>
+
+              <td>
+                <span class="department-badge">
+                  {{ employee.department }}
+                </span>
+              </td>
+
+              <td>{{ employee.jobTitle }}</td>
+
+              <td class="salary-cell">
+                {{ employee.currency }}
+                {{ employee.salary | number:'1.2-2' }}
+              </td>
+
+              <td>
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="btn-icon btn-edit"
+                    title="Edit employee"
+                    aria-label="Edit employee"
+                    (click)="openEditModal(employee)">
+                    ✎
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-icon btn-delete"
+                    title="Delete employee"
+                    aria-label="Delete employee"
+                    (click)="deleteEmployee(employee)">
+                    🗑
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="employees.length === 0">
+              <td colspan="8" class="empty-state">
+                <div class="empty-state-icon">🔎</div>
+                <h3>No employees found</h3>
+                <p>
+                  No matching employees found in the database.
+                  Try another search or clear the search field.
+                </p>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="clearSearch()"
+                  *ngIf="searchTerm">
+                  Clear Search
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="!loading && totalEmployees > 0">
+
+        <div class="pagination-info">
+          Page {{ currentPage + 1 }} of {{ totalPages }}
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="pagination-button"
+            (click)="previousPage()"
+            [disabled]="currentPage === 0">
+            Previous
+          </button>
+
+          <button
+            type="button"
+            class="pagination-button"
+            (click)="nextPage()"
+            [disabled]="currentPage >= totalPages - 1">
+            Next
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Add / Edit Employee Modal -->
+  <div
+    class="modal-overlay"
+    *ngIf="showModal"
+    (click)="closeModal()">
+
+    <section
+      class="employee-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="employee-modal-title"
+      (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h2 id="employee-modal-title">
+            {{ isEditMode ? 'Edit Employee' : 'Add Employee' }}
+          </h2>
+          <p>
+            {{
+              isEditMode
+                ? 'Update the employee information below.'
+                : 'Enter the details for the new employee.'
+            }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="modal-close"
+          aria-label="Close modal"
+          [disabled]="saving"
+          (click)="closeModal()">
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <div
+          *ngIf="errorMessage"
+          class="alert alert-error"
+          role="alert">
+          {{ errorMessage }}
+        </div>
+
+        <form
+          #employeeForm="ngForm"
+          (ngSubmit)="saveEmployee()">
+
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label for="employeeNumber">Employee Number *</label>
+              <input
+                id="employeeNumber"
+                name="employeeNumber"
+                type="text"
+                [(ngModel)]="formEmployee.employeeNumber"
+                placeholder="e.g. EMP10001"
+                required
+                maxlength="50"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                [(ngModel)]="formEmployee.firstName"
+                placeholder="Enter first name"
+                required
+                maxlength="100"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                [(ngModel)]="formEmployee.lastName"
+                placeholder="Enter last name"
+                required
+                maxlength="100"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                [(ngModel)]="formEmployee.email"
+                placeholder="employee@example.com"
+                required
+                email
+                maxlength="200"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="country">Country *</label>
+              <input
+                id="country"
+                name="country"
+                type="text"
+                [(ngModel)]="formEmployee.country"
+                placeholder="Enter country"
+                required
+                maxlength="100"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="department">Department *</label>
+              <input
+                id="department"
+                name="department"
+                type="text"
+                [(ngModel)]="formEmployee.department"
+                placeholder="Enter department"
+                required
+                maxlength="100"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="jobTitle">Job Title *</label>
+              <input
+                id="jobTitle"
+                name="jobTitle"
+                type="text"
+                [(ngModel)]="formEmployee.jobTitle"
+                placeholder="Enter job title"
+                required
+                maxlength="150"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="salary">Salary *</label>
+              <input
+                id="salary"
+                name="salary"
+                type="number"
+                [(ngModel)]="formEmployee.salary"
+                placeholder="Enter salary"
+                required
+                min="0"
+                step="0.01"
+                [disabled]="saving"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="currency">Currency *</label>
+              <select
+                id="currency"
+                name="currency"
+                [(ngModel)]="formEmployee.currency"
+                required
+                [disabled]="saving">
+                <option value="INR">INR - Indian Rupee</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="AED">AED - UAE Dirham</option>
+                <option value="SGD">SGD - Singapore Dollar</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="closeModal()"
+              [disabled]="saving">
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="saving || employeeForm.invalid">
+              {{
+                saving
+                  ? 'Saving...'
+                  : (isEditMode ? 'Update Employee' : 'Save Employee')
+              }}
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>Salary Management System</p>
+    <span>Employee records and analytics</span>
+  </footer>
+
+</div>
