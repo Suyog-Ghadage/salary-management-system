@@ -5,7 +5,13 @@
   <header class="app-header">
     <div class="header-content">
       <div class="brand">
-        <div class="brand-icon">S</div>
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" role="presentation">
+            <path class="brand-mark-frame" d="M24 3.5 42 10v12.2c0 10.8-7.2 18.4-18 22.3C13.2 40.6 6 33 6 22.2V10L24 3.5Z" />
+            <path class="brand-mark-line" d="M15 30V18m9 12V14m9 16V21" />
+            <path class="brand-mark-baseline" d="M12.5 34h23" />
+          </svg>
+        </div>
         <div>
           <h1>Salary Management System</h1>
           <p>Employee directory and compensation overview</p>
@@ -65,7 +71,9 @@
     <section class="stats-grid">
 
       <article class="stat-card">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m7-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6-7.5a4 4 0 0 1 0 7.8m5 8.7v-1.5a4 4 0 0 0-3-3.9" /></svg>
+        </div>
         <div class="stat-label">Total Employees</div>
         <div class="stat-value">
           {{ totalEmployees | number }}
@@ -73,26 +81,42 @@
         <span>Employees in the database</span>
       </article>
 
-      <article class="stat-card">
-        <div class="stat-icon">🌍</div>
+      <article
+        class="stat-card clickable"
+        tabindex="0"
+        (click)="toggleBreakdown('countries')"
+        (keydown.enter)="toggleBreakdown('countries')"
+        (keydown.space)="toggleBreakdown('countries')">
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3.5 12h17M12 3a14 14 0 0 1 0 18m0-18a14 14 0 0 0 0 18" /></svg>
+        </div>
         <div class="stat-label">Countries</div>
         <div class="stat-value">
           {{ getCountryCount() | number }}
         </div>
-        <span>Across all employees</span>
+        <span>Click to view current distribution</span>
       </article>
 
-      <article class="stat-card">
-        <div class="stat-icon">🏢</div>
+      <article
+        class="stat-card clickable"
+        tabindex="0"
+        (click)="toggleBreakdown('departments')"
+        (keydown.enter)="toggleBreakdown('departments')"
+        (keydown.space)="toggleBreakdown('departments')">
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 21V5l8-2v18m0-12h8v12M2 21h20M8 7v.01M8 11v.01M8 15v.01m8-2v.01m0 3v.01" /></svg>
+        </div>
         <div class="stat-label">Departments</div>
         <div class="stat-value">
           {{ getDepartmentCount() | number }}
         </div>
-        <span>Across all employees</span>
+        <span>Click to view current distribution</span>
       </article>
 
       <article class="stat-card">
-        <div class="stat-icon">📄</div>
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm7 0v5h5M9 13h6m-6 4h6" /></svg>
+        </div>
         <div class="stat-label">Current Page</div>
         <div class="stat-value">
           {{ totalPages === 0 ? 0 : currentPage + 1 }}
@@ -101,6 +125,33 @@
         <span>Paginated employee records</span>
       </article>
 
+    </section>
+
+    <section class="breakdown-panel" *ngIf="selectedBreakdown">
+      <div class="breakdown-header">
+        <div>
+          <p class="breakdown-label">
+            {{ selectedBreakdown === 'countries' ? 'Country' : 'Department' }} breakdown
+          </p>
+          <h3>
+            {{ selectedBreakdown === 'countries' ? 'Current countries' : 'Current departments' }}
+          </h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="selectedBreakdown = null">
+          Close
+        </button>
+      </div>
+
+      <div class="breakdown-grid">
+        <div class="breakdown-item" *ngFor="let item of getActiveBreakdown()">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.count }}</strong>
+        </div>
+      </div>
     </section>
 
     <!-- Employee Directory -->

@@ -1,1 +1,54 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --bg: #f4f6f1;
+  --bg-deep: #e9eee7;
+  --surface: #ffffff;
+  --surface-soft: #f7f8f5;
+  --primary: #1c6652;
+  --primary-dark: #154c3e;
+  --primary-soft: #dcebe3;
+  --secondary: #192923;
+  --text: #192923;
+  --muted: #68766e;
+  --border: rgba(71, 94, 81, 0.2);
+  --success-bg: #eaf4ee;
+  --success-text: #286348;
+  --danger-bg: #fbefeb;
+  --danger-text: #a44635;
+  --warning-bg: #f8f1e3;
+  --warning-text: #946b29;
+  --shadow: 0 16px 38px rgba(29, 48, 38, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(199, 164, 101, 0.12), transparent 32%),
+    radial-gradient(ellipse at 92% 12%, rgba(91, 143, 119, 0.1), transparent 30%),
+    linear-gradient(180deg, var(--bg) 0%, #eef1eb 100%);
+  color: var(--text);
+  font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  transition: all 0.2s ease;
+}

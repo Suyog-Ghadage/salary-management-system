@@ -10,6 +10,11 @@ import {
   EmployeeService
 } from './services/employee.service';
 
+interface BreakdownEntry {
+  label: string;
+  count: number;
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -29,6 +34,10 @@ export class AppComponent implements OnInit {
     countryCount: 0,
     departmentCount: 0
   };
+
+  countryBreakdown: BreakdownEntry[] = [];
+  departmentBreakdown: BreakdownEntry[] = [];
+  selectedBreakdown: 'countries' | 'departments' | null = null;
 
   loading = false;
   saving = false;
@@ -50,6 +59,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.loadEmployeesPage();
     this.loadAnalytics();
+    this.loadBreakdowns();
   }
 
   get totalEmployees(): number {
@@ -121,6 +131,55 @@ export class AppComponent implements OnInit {
         console.error('Unable to load analytics:', error);
       }
     });
+  }
+
+  loadBreakdowns(): void {
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        this.countryBreakdown = this.buildBreakdown(employees, 'country');
+        this.departmentBreakdown = this.buildBreakdown(employees, 'department');
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Unable to load employee breakdown:', error);
+      }
+    });
+  }
+
+  toggleBreakdown(type: 'countries' | 'departments'): void {
+    this.selectedBreakdown = this.selectedBreakdown === type ? null : type;
+  }
+
+  getActiveBreakdown(): BreakdownEntry[] {
+    if (this.selectedBreakdown === 'countries') {
+      return this.countryBreakdown;
+    }
+
+    if (this.selectedBreakdown === 'departments') {
+      return this.departmentBreakdown;
+    }
+
+    return [];
+  }
+
+  private buildBreakdown(
+    employees: Employee[],
+    key: 'country' | 'department'
+  ): BreakdownEntry[] {
+    const counts = new Map<string, number>();
+
+    employees.forEach((employee) => {
+      const value = String(employee[key] ?? '').trim();
+
+      if (!value) {
+        return;
+      }
+
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([label, count]) => ({ label, count }));
   }
 
   onSearch(): void {
@@ -257,6 +316,7 @@ export class AppComponent implements OnInit {
         this.currentPage = 0;
         this.loadEmployeesPage();
         this.loadAnalytics();
+        this.loadBreakdowns();
       },
       error: (error: HttpErrorResponse) => {
         this.saving = false;
@@ -295,6 +355,7 @@ export class AppComponent implements OnInit {
 
         this.loadEmployeesPage();
         this.loadAnalytics();
+        this.loadBreakdowns();
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.getErrorMessage(
